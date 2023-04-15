@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "295954475937",
+    "firebase_url": "https://road-crack-detector-a17ef-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "road-crack-detector-a17ef",
+    "storage_bucket": "road-crack-detector-a17ef.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:295954475937:android:3645068953e273ff4439e0",
+        "android_client_info": {
+          "package_name": "com.gvvp.roadcrackdetector"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "295954475937-tm84b0a70cfj68ssnbmcn7b5pi2704lp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDeHrjgQ5m4zv07X0Sv0aGGNWsO4zjicOI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "295954475937-tm84b0a70cfj68ssnbmcn7b5pi2704lp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

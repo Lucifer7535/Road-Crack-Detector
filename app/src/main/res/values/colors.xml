@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_color">#7F5576</color>
+    <color name="secondary_color">#4188B7</color>
+    <color name="white_color">#ffffff</color>
+    <color name="black_color">#000000</color>
+
+    <color name="tfe_color_primary">#7F5576</color>
+    <color name="tfe_color_primary_dark">#6A1358</color>
+    <color name="tfe_color_accent">#4188B7</color>
+
+    <color name="tfe_semi_transparent">#66000000</color>
+
+    <color name="control_background">#cc4285f4</color>
+    <color name="selection_highlight">#aaaaaa</color>
+    <color name="selection_focus">#4188B7</color>
+    <color name="item_normal">#eeeeee</color>
+    <color name="material_primary">#7F5576</color>
+    <color name="item_white">#ffffff</color>
+</resources>
