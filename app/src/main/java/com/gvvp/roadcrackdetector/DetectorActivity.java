@@ -1,5 +1,7 @@
 package com.gvvp.roadcrackdetector;
 
+import static android.content.ContentValues.TAG;
+
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -9,6 +11,8 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.location.Address;
+import android.location.Geocoder;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
 import android.util.Log;
@@ -17,9 +21,18 @@ import android.util.TypedValue;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.gvvp.roadcrackdetector.customview.OverlayView;
 import com.gvvp.roadcrackdetector.customview.OverlayView.DrawCallback;
 import com.gvvp.roadcrackdetector.env.BorderedText;
@@ -36,6 +49,10 @@ import com.gvvp.roadcrackdetector.tracking.MultiBoxTracker;
  */
 public class DetectorActivity extends CameraActivity implements OnImageAvailableListener {
     private static final Logger LOGGER = new Logger();
+
+    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10;
+    private static final long MIN_TIME_BW_UPDATES = 1000 * 60 * 1;
+    private FirebaseAuth mAuth;
 
     private static final DetectorMode MODE = DetectorMode.TF_OD_API;
     private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.3f;
@@ -125,6 +142,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         tracker.setFrameConfiguration(previewWidth, previewHeight, sensorOrientation);
     }
 
+
+
     protected void updateActiveModel() {
         // Get UI information before delegating to background
         final int modelIndex = modelView.getCheckedItemPosition();
@@ -196,6 +215,48 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         });
     }
 
+    public List<Address> addresses = null;
+    void logtoDatabase(Classifier.Recognition result) {
+        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+        DatabaseReference databaseReference = firebaseDatabase.getReference();
+        // Retrieve the current user's UID
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        String uid = currentUser.getUid();
+
+        if (result.getConfidence() > 0.5) {
+            Map<String, Object> damage = new HashMap<>();
+            damage.put("Label", result.getTitle());
+            damage.put("Confidence", 100 * result.getConfidence());
+
+            try {
+                Geocoder geocoder = new Geocoder(DetectorActivity.this
+                        , Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocation(
+                        Dashboard.latitude, Dashboard.longitude, 1
+                );
+                Address address = addresses.get(0);
+                damage.put("Latitude", Dashboard.latitude);
+                damage.put("Longitude", Dashboard.longitude);
+                damage.put("Country", address.getCountryName());
+                damage.put("Locality", address.getLocality());
+                damage.put("Postal Code", address.getPostalCode());
+                damage.put("Address Line", address.getAddressLine(0));
+                damage.put("TimeStamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar
+                        .getInstance().getTime()));
+
+                DatabaseReference locationsRef = databaseReference.child("Users").child(uid).child("locations");
+                String key = locationsRef.push().getKey();
+                locationsRef.child(key).setValue(damage);
+
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
     @Override
     protected void processImage() {
         ++timestamp;
@@ -252,6 +313,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
+                                logtoDatabase(result);
                                 canvas.drawRect(location, paint);
 
                                 cropToFrameTransform.mapRect(location);
