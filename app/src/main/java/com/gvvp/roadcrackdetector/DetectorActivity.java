@@ -246,8 +246,26 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                 damage.put("TimeStamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar
                         .getInstance().getTime()));
 
+                //rotating the bitmap
+                //Matrix matrix = new Matrix();
+                //matrix.postRotate(90);
+                //Bitmap rotatedBitmap = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
+
+                // Draw the bounding box on the image
+                Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
+                Canvas canvas = new Canvas(mutableBitmap);
+                Paint paint = new Paint();
+                paint.setColor(Color.RED);
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(5.0f);
+                RectF location = result.getLocation();
+                if (location != null) {
+                    canvas.drawRect(location, paint);
+                }
+
+                // Get the image as a byte array
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                mutableBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
                 byte[] imageData = baos.toByteArray();
                 String imageBase64 = Base64.encodeToString(imageData, Base64.DEFAULT);
 
@@ -321,7 +339,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
-                                logtoDatabase(result, rgbFrameBitmap);
+                                logtoDatabase(result, croppedBitmap);
                                 canvas.drawRect(location, paint);
                                 cropToFrameTransform.mapRect(location);
                                 result.setLocation(location);
