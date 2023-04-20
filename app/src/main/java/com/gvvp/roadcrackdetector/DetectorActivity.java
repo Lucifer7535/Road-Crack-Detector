@@ -15,11 +15,13 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -215,8 +217,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         });
     }
 
-    public List<Address> addresses = null;
-    void logtoDatabase(Classifier.Recognition result) {
+    void logtoDatabase(Classifier.Recognition result, Bitmap image) {
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
         DatabaseReference databaseReference = firebaseDatabase.getReference();
         // Retrieve the current user's UID
@@ -244,6 +245,13 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                 damage.put("Address Line", address.getAddressLine(0));
                 damage.put("TimeStamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar
                         .getInstance().getTime()));
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                byte[] imageData = baos.toByteArray();
+                String imageBase64 = Base64.encodeToString(imageData, Base64.DEFAULT);
+
+                damage.put("Image", imageBase64);
 
                 DatabaseReference locationsRef = databaseReference.child("Users").child(uid).child("locations");
                 String key = locationsRef.push().getKey();
@@ -313,11 +321,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
                             if (location != null && result.getConfidence() >= minimumConfidence) {
-                                logtoDatabase(result);
+                                logtoDatabase(result, rgbFrameBitmap);
                                 canvas.drawRect(location, paint);
-
                                 cropToFrameTransform.mapRect(location);
-
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
                             }
