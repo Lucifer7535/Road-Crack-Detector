@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -254,13 +255,38 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                 // Draw the bounding box on the image
                 Bitmap mutableBitmap = image.copy(Bitmap.Config.ARGB_8888, true);
                 Canvas canvas = new Canvas(mutableBitmap);
+
                 Paint paint = new Paint();
                 paint.setColor(Color.RED);
                 paint.setStyle(Paint.Style.STROKE);
                 paint.setStrokeWidth(5.0f);
+
+                Paint textpaint = new Paint();
+                textpaint.setColor(Color.RED);
+                textpaint.setStyle(Paint.Style.STROKE);
+                textpaint.setStrokeWidth(2.0f);
+                textpaint.setTextSize(30);
+
+                Paint backgroundPaint = new Paint();
+                backgroundPaint.setColor(Color.BLACK);
+                backgroundPaint.setAlpha(128);
+
                 RectF location = result.getLocation();
+                String title = result.getTitle();
+                Float conf = 100 * result.getConfidence();
+                DecimalFormat df = new DecimalFormat("#.##");
+                String confasString = df.format(conf)+"%";
                 if (location != null) {
                     canvas.drawRect(location, paint);
+                    float titleWidth = textpaint.measureText(title);
+                    float confWidth = textpaint.measureText(confasString);
+                    float top = location.top-40;
+
+                    float centerX = location.left;
+                    float baseline = top - textpaint.getFontMetrics().top;
+
+                    canvas.drawText(title, centerX, baseline, textpaint);
+                    canvas.drawText(confasString, location.right-confWidth, baseline, textpaint);
                 }
 
                 // Get the image as a byte array
