@@ -1,0 +1,51 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white_color"
+    android:minWidth="200dp"
+    >
+
+    <LinearLayout
+        android:id="@+id/text_box"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/layout_bg"
+        android:minWidth="200dp"
+        >
+
+        <ImageView
+            android:id="@+id/crackimage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_launcher_background"
+            />
+
+        <TextView
+            android:id="@+id/cracktitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textColor="@color/black_color"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:padding="8dp"
+            />
+
+        <TextView
+            android:id="@+id/crackinfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/black_color"
+            android:textSize="14sp"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:padding="8dp"
+            />
+
+    </LinearLayout>
+</ScrollView>

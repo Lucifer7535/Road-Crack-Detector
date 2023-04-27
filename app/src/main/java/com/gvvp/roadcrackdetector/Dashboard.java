@@ -24,6 +24,7 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -31,6 +32,7 @@ import com.gvvp.roadcrackdetector.env.Logger;
 
 public class Dashboard extends AppCompatActivity {
     public static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.15f;
+    public static final int PRIORITY_HIGH_ACCURACY = 100;
     private Button logout_btn, detect_btn,map_btn;
     private FirebaseAuth mAuth;
     public static double latitude;
@@ -123,7 +125,7 @@ public class Dashboard extends AppCompatActivity {
                 return;
             }
 
-            fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+            fusedLocationProviderClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, null).addOnCompleteListener(new OnCompleteListener<Location>() {
                 @Override
                 public void onComplete(@NonNull Task<Location> task) {
                     Location location = task.getResult();
@@ -135,10 +137,10 @@ public class Dashboard extends AppCompatActivity {
                         latitude = location.getLatitude();
                     } else {
                         LocationRequest locationRequest = new LocationRequest()
-                                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                                .setInterval(10000)
-                                .setFastestInterval(1000)
-                                .setNumUpdates(1);
+                                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                                .setInterval(100)
+                                .setFastestInterval(10)
+                                .setNumUpdates(3);
 
                         LocationCallback locationCallback = new LocationCallback() {
                             @Override

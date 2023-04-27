@@ -14,6 +14,7 @@ import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.media.ImageReader.OnImageAvailableListener;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
@@ -25,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -53,8 +55,9 @@ import com.gvvp.roadcrackdetector.tracking.MultiBoxTracker;
 public class DetectorActivity extends CameraActivity implements OnImageAvailableListener {
     private static final Logger LOGGER = new Logger();
 
-    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10;
-    private static final long MIN_TIME_BW_UPDATES = 1000 * 60 * 1;
+    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 2;
+    private static final long MIN_TIME_BW_UPDATES = 1000 *20 * 1;
+    private boolean isLogToDatabaseEnabled = true;
     private FirebaseAuth mAuth;
 
     private static final DetectorMode MODE = DetectorMode.TF_OD_API;
@@ -224,7 +227,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         // Retrieve the current user's UID
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        String uid = currentUser.getUid();
+        final List<String> titles = new ArrayList<>();
+        final String uid = currentUser.getUid();
 
         if (result.getConfidence() > 0.5) {
             Map<String, Object> damage = new HashMap<>();
@@ -364,13 +368,21 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
                         for (final Classifier.Recognition result : results) {
                             final RectF location = result.getLocation();
-                            if (location != null && result.getConfidence() >= minimumConfidence) {
-                                logtoDatabase(result, croppedBitmap);
+                            if(isLogToDatabaseEnabled){
+                                logtoDatabase(result,croppedBitmap);
+                                isLogToDatabaseEnabled = false;
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        // Enable logging to database after 20 seconds
+                                        isLogToDatabaseEnabled = true;
+                                    }
+                                }, 5000); // 5-second delay
+                            }
                                 canvas.drawRect(location, paint);
                                 cropToFrameTransform.mapRect(location);
                                 result.setLocation(location);
                                 mappedRecognitions.add(result);
-                            }
                         }
 
                         tracker.trackResults(mappedRecognitions, currTimestamp);
