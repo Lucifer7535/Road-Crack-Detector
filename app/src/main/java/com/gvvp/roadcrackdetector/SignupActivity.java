@@ -10,19 +10,19 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 
 public class SignupActivity extends AppCompatActivity {
-    FirebaseDatabase firebaseDatabase;
-    DatabaseReference reference;
-
     TextInputLayout fullname_txt, username_txt, email_txt, phoneno_txt, password_txt;
     ProgressBar progress_bar;
 
@@ -159,8 +159,26 @@ public class SignupActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                storingdata user = new storingdata(fullname, username, email, phoneno);
-                                FirebaseDatabase.getInstance().getReference("Users")
+                                storingdata user = new storingdata(username, fullname, email, phoneno);
+                                FirebaseFirestore db  = FirebaseFirestore.getInstance();
+                                DocumentReference newUserRef = db.collection("Users").document(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                                newUserRef.set(user).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        startActivity(new Intent(SignupActivity.this, MainActivity.class));
+                                        Toast.makeText(SignupActivity.this,"User has been registered successfully", Toast.LENGTH_LONG).show();
+                                        progress_bar.setVisibility(view.VISIBLE);
+                                        finish();
+                                    }
+                                }).addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(SignupActivity.this,"Failed to Register! Try Again!", Toast.LENGTH_LONG).show();
+                                        progress_bar.setVisibility(view.GONE);
+                                    }
+                                });
+
+                                /*FirebaseDatabase.getInstance().getReference("Users")
                                         .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
                                         .setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
                                             @Override
@@ -175,9 +193,9 @@ public class SignupActivity extends AppCompatActivity {
                                                     progress_bar.setVisibility(view.GONE);
                                                 }
                                             }
-                                        });
+                                        });*/
                             }else {
-                                Toast.makeText(SignupActivity.this, "Failed to Register! Try Again!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(SignupActivity.this, "User with same email already exists! Try using another email id", Toast.LENGTH_LONG).show();
                                 progress_bar.setVisibility(view.GONE);
                             }
                         }

@@ -22,6 +22,8 @@ import android.util.Size;
 import android.util.TypedValue;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -36,8 +38,14 @@ import java.util.Map;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.gvvp.roadcrackdetector.customview.OverlayView;
 import com.gvvp.roadcrackdetector.customview.OverlayView.DrawCallback;
 import com.gvvp.roadcrackdetector.env.BorderedText;
@@ -61,7 +69,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     private FirebaseAuth mAuth;
 
     private static final DetectorMode MODE = DetectorMode.TF_OD_API;
-    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.3f;
+    private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.805f;
     private static final boolean MAINTAIN_ASPECT = true;
     private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 640);
     private static final boolean SAVE_PREVIEW_BITMAP = false;
@@ -222,8 +230,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     }
 
     void logtoDatabase(Classifier.Recognition result, Bitmap image) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        /*
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
         DatabaseReference databaseReference = firebaseDatabase.getReference();
+        */
         // Retrieve the current user's UID
         FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
@@ -301,10 +312,13 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
                 damage.put("Image", imageBase64);
 
-                DatabaseReference locationsRef = databaseReference.child("Users").child(uid).child("locations");
-                String key = locationsRef.push().getKey();
-                locationsRef.child(key).setValue(damage);
-
+                CollectionReference locationsRef = db.collection("Users").document(uid).collection("locations");
+                String key = locationsRef.document().getId();
+                damage.put("id", key);
+                locationsRef.document(key).set(damage);
+                //DatabaseReference locationsRef = databaseReference.child("Users").child(uid).child("locations");
+                //String key = locationsRef.push().getKey();
+                //locationsRef.child(key).setValue(damage);
             } catch(IOException e) {
                 e.printStackTrace();
             }
@@ -379,10 +393,10 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                     }
                                 }, 5000); // 5-second delay
                             }
-                                canvas.drawRect(location, paint);
-                                cropToFrameTransform.mapRect(location);
-                                result.setLocation(location);
-                                mappedRecognitions.add(result);
+                            canvas.drawRect(location, paint);
+                            cropToFrameTransform.mapRect(location);
+                            result.setLocation(location);
+                            mappedRecognitions.add(result);
                         }
 
                         tracker.trackResults(mappedRecognitions, currTimestamp);

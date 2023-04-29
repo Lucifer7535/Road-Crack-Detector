@@ -1,12 +1,12 @@
 package com.gvvp.roadcrackdetector;
 
 public class storingdata {
-    String fullname, username, email, phoneno;
+    String username, fullname, email, phoneno;
 
     public storingdata() {
     }
 
-    public storingdata(String fullname, String username, String email, String phoneno) {
+    public storingdata(String username, String fullname, String email, String phoneno) {
         this.fullname = fullname;
         this.username = username;
         this.email = email;

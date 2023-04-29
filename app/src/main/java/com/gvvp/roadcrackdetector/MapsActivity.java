@@ -1,5 +1,7 @@
 package com.gvvp.roadcrackdetector;
 
+import static androidx.constraintlayout.widget.Constraints.TAG;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
@@ -11,6 +13,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -24,6 +27,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -31,6 +36,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.gvvp.roadcrackdetector.databinding.ActivityMapsBinding;
 
 import com.gvvp.roadcrackdetector.env.Logger;
@@ -86,6 +95,53 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM));
             }
         });
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference locationsRef = db.collection("Users").document(uid).collection("locations");
+
+        locationsRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(MapsActivity.this));
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        String label = document.getString("Label");
+                        double latitude = document.getDouble("Latitude");
+                        double longitude = document.getDouble("Longitude");
+
+                        String addressLine = document.getString("Address Line");
+                        double confidence = document.getDouble("Confidence");
+                        String image = document.getString("Image");
+                        String locality = document.getString("Locality");
+                        String postalCode = document.getString("Postal Code");
+                        String timeStamp = document.getString("TimeStamp");
+
+                        Bitmap markerimage = decodeBase64ToBitmap(image);
+
+                        LatLng location = new LatLng(latitude, longitude);
+
+                        MarkerOptions markerOptions = new MarkerOptions()
+                                .position(location)
+                                .title(label)
+                                .snippet(addressLine);
+
+                        Marker newmarker = mMap.addMarker(markerOptions);
+                        newmarker.setTag(image);
+                        markerList.add(newmarker);
+
+                        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                        for (Marker marker : markerList) {
+                            builder.include(marker.getPosition());
+                        }
+                        LatLngBounds bounds = builder.build();
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+                    }
+                } else {
+                    Log.d(TAG, "Error getting documents: ", task.getException());
+                }
+            }
+        });
+        /*
         // Create a database reference to the "locations" node in your Firebase Realtime Database
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Users").child(uid).child("locations");
         databaseReference.addValueEventListener(new ValueEventListener() {
@@ -135,7 +191,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
             }
-        });
+        });*/
     }
     private Bitmap decodeBase64ToBitmap(String base64) {
         byte[] imageBytes = Base64.decode(base64, Base64.DEFAULT);
